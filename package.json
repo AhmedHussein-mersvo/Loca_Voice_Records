@@ -17,6 +17,7 @@
     "@react-navigation/native-stack": "^7.9.1",
     "react": "19.1.0",
     "react-native": "^0.81.0",
+    "react-native-biometrics": "^3.0.1",
     "react-native-fs": "^2.20.0",
     "react-native-nitro-modules": "^0.33.1",
     "react-native-nitro-sound": "^0.2.10",

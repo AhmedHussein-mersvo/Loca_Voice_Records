@@ -3,10 +3,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import VoiceToTextScreen from './src/screens/VoiceToTextScreen';
 import VoiceToClickScreen from './src/screens/VoiceToClickScreen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { PermissionsAndroid, Platform } from 'react-native';
 import TrackPlayer from 'react-native-track-player';
-
+import BiometcricGate from './src/utils/BiometricGate';
 const Tab = createBottomTabNavigator();
 
 export default function App() {
@@ -47,6 +47,11 @@ export default function App() {
 
     androidRequestPermission();
   }, []);
+  const [unlocked, setUnlocked] = useState(false);
+
+  if (!unlocked) {
+    return <BiometcricGate onUnlocked={() => setUnlocked(true)} />;
+  }
   return (
     <NavigationContainer>
       <Tab.Navigator

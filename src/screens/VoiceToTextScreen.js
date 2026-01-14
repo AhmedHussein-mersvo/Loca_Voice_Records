@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Dimensions,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,7 +12,7 @@ import Slider from '@react-native-community/slider';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Sound from 'react-native-nitro-sound';
 import TrackPlayer from 'react-native-track-player';
-
+const width = Dimensions.get('screen').width;
 export default function VoiceToTextScreen() {
   const [recordSecs, setRecordSecs] = useState(0);
   const [recordTime, setRecordTime] = useState('00:00:00');
@@ -22,7 +23,7 @@ export default function VoiceToTextScreen() {
   const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
-
+  const [recording, setRecording] = useState(false);
   const folder = `${RNFS.DownloadDirectoryPath}/voices`;
   const AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'aac', 'ogg'];
 
@@ -34,6 +35,7 @@ export default function VoiceToTextScreen() {
       setRecordTime(Sound.mmssss(Math.floor(e.currentPosition)));
     });
     await Sound.startRecorder();
+    setRecording(true);
   };
 
   const onStopRecord = async () => {
@@ -57,6 +59,13 @@ export default function VoiceToTextScreen() {
 
   const getAudios = async () => {
     try {
+      const exists = await RNFS.exists(folder);
+      if (!exists) {
+        await RNFS.mkdir(folder);
+        setAudioPlayers([]);
+        return;
+      }
+
       const files = await RNFS.readDir(folder);
 
       const audioFiles = files.filter(
@@ -69,16 +78,13 @@ export default function VoiceToTextScreen() {
 
       for (const file of audioFiles) {
         const duration = await getAudioDuration(file.path);
-
-        withDurations.push({
-          ...file,
-          duration, // seconds
-        });
+        withDurations.push({ ...file, duration });
       }
 
       setAudioPlayers(withDurations);
     } catch (e) {
       console.error('Read audio error:', e);
+      setAudioPlayers([]);
     }
   };
 
@@ -144,14 +150,13 @@ export default function VoiceToTextScreen() {
     setDuration(0);
   };
 
- const seekTo = async ms => {
-  try {
-    await Sound.seekToPlayer(ms);
-  } catch (e) {
-    console.error('Seek error:', e);
-  }
-};
-
+  const seekTo = async ms => {
+    try {
+      await Sound.seekToPlayer(ms);
+    } catch (e) {
+      console.error('Seek error:', e);
+    }
+  };
 
   const toggleSpeed = async () => {
     const next = playbackSpeed === 1 ? 1.5 : playbackSpeed === 1.5 ? 2 : 1;
@@ -202,7 +207,7 @@ export default function VoiceToTextScreen() {
           <Text style={styles.btnText}>Start Recording</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.stopBtn} onPress={onStopRecord}>
+        <TouchableOpacity disabled={!recording} style={[styles.stopBtn, { opacity: recording ? 1 : 0.5 }]} onPress={onStopRecord}>
           <Text style={styles.btnText}>Stop Recording</Text>
         </TouchableOpacity>
 
@@ -220,10 +225,10 @@ export default function VoiceToTextScreen() {
                 (
                   <View key={audio.path} style={styles.card}>
                     <Text style={styles.title}>{audio.name}</Text>
-
                     <View style={styles.row}>
                       <TouchableOpacity onPress={() => onPlayPause(audio.path)}>
                         <Ionicons
+                          style={styles.icon}
                           name={
                             playingPath === audio.path && !isPaused
                               ? 'pause'
@@ -240,7 +245,7 @@ export default function VoiceToTextScreen() {
                       )}
 
                       <TouchableOpacity onPress={onStop}>
-                        <Ionicons name="stop" size={20} />
+                        <Ionicons style={styles.icon} name="stop" size={20} />
                       </TouchableOpacity>
 
                       <Slider
@@ -268,13 +273,13 @@ export default function VoiceToTextScreen() {
                     </View>
 
                     <View style={styles.timeRow}>
-                      <Text>
+                      <Text style={{color:'#525252'}}>
                         {playingPath === audio.path
                           ? formatTime(position)
                           : '00:00'}
                       </Text>
 
-                      <Text>
+                      <Text style={{color:'#525252'}}>
                         {audio.duration
                           ? formatTime(audio.duration * 1000)
                           : '--:--'}
@@ -322,9 +327,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   list: {
+    marginTop: width > 700 ? 0 : 100,
     padding: 40,
     gap: 20,
-    width: '35%',
+    width: width > 700 ? '35%' : '100%',
   },
   card: {
     backgroundColor: '#fcf9f9',
@@ -336,6 +342,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#525252',
   },
   row: {
     flexDirection: 'row',
@@ -347,10 +354,13 @@ const styles = StyleSheet.create({
   },
   speed: {
     fontWeight: 'bold',
-    color: '#c9c930',
+    color: '#535353',
   },
   timeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  icon:{
+    color: '#525252'
+  }
 });
