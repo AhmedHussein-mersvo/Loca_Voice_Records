@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Dimensions,
+  Dimensions, Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,8 +24,11 @@ export default function VoiceToTextScreen() {
   const [position, setPosition] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [recording, setRecording] = useState(false);
-  const folder = `${RNFS.DownloadDirectoryPath}/voices`;
-  const AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'aac', 'ogg'];
+  const folder = `${RNFS.DocumentDirectoryPath}/voices`;
+  const AUDIO_EXTENSIONS =
+    Platform.OS === 'ios'
+      ? ['m4a', 'wav', 'aac']
+      : ['mp3', 'wav', 'm4a', 'aac', 'ogg'];
 
   /* ---------------- Recording ---------------- */
 
@@ -46,13 +49,14 @@ export default function VoiceToTextScreen() {
       await RNFS.mkdir(folder);
     }
 
-    const fileName = `voice_${Date.now()}.mp3`;
+    const fileName = Platform.OS === 'ios'? `voice_${Date.now()}.m4a` :`voice_${Date.now()}.mp3`;
     const to = `${folder}/${fileName}`;
     await RNFS.copyFile(from, to);
 
     setAudioPath(to);
     setRecordSecs(0);
     setRecordTime('00:00:00');
+    setRecording(false);
   };
 
   /* ---------------- Audio list ---------------- */
@@ -124,7 +128,13 @@ export default function VoiceToTextScreen() {
       setPlayingPath(path);
       setIsPaused(false);
 
-      await Sound.startPlayer(path);
+      const playPath =
+        Platform.OS === 'ios' && !path.startsWith('file://')
+          ? `file://${path}`
+          : path;
+
+      await Sound.startPlayer(playPath);
+
 
       Sound.addPlayBackListener(e => {
         if (!e?.duration) return;
@@ -197,17 +207,53 @@ export default function VoiceToTextScreen() {
       return 0;
     }
   };
+
+  /*------------------Delete ------------------*/
+
+  const deleteAudio = async audio => {
+    try {
+      // 1️⃣ If this audio is playing → stop it
+      if (playingPath === audio.path) {
+        await Sound.stopPlayer();
+        Sound.removePlayBackListener();
+        setPlayingPath(null);
+        setIsPaused(false);
+        setPosition(0);
+        setDuration(0);
+      }
+
+      // 2️⃣ Delete file
+      const exists = await RNFS.exists(audio.path);
+      if (exists) {
+        await RNFS.unlink(audio.path);
+      }
+
+      // 3️⃣ Remove from UI list
+      setAudioPlayers(prev => prev.filter(item => item.path !== audio.path));
+    } catch (e) {
+      console.error('Delete audio error:', e);
+    }
+  };
+
   /* ---------------- Render ---------------- */
 
   return (
     <View style={styles.container}>
       {/* Controls */}
       <View style={styles.controls}>
-        <TouchableOpacity style={styles.startBtn} onPress={onStartRecord}>
+        <TouchableOpacity
+          disabled={recording}
+          style={[styles.startBtn, { opacity: !recording ? 1 : 0.5 }]}
+          onPress={onStartRecord}
+        >
           <Text style={styles.btnText}>Start Recording</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity disabled={!recording} style={[styles.stopBtn, { opacity: recording ? 1 : 0.5 }]} onPress={onStopRecord}>
+        <TouchableOpacity
+          disabled={!recording}
+          style={[styles.stopBtn, { opacity: recording ? 1 : 0.5 }]}
+          onPress={onStopRecord}
+        >
           <Text style={styles.btnText}>Stop Recording</Text>
         </TouchableOpacity>
 
@@ -221,10 +267,21 @@ export default function VoiceToTextScreen() {
             .sort((a, b) => b.mtime - a.mtime)
             .map(
               audio => (
-                console.log(audio),
                 (
                   <View key={audio.path} style={styles.card}>
-                    <Text style={styles.title}>{audio.name}</Text>
+                    <View
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Text style={styles.title}>{audio.name}</Text>
+                      <TouchableOpacity onPress={()=>deleteAudio(audio)}>
+                        <Ionicons name="trash" size={20} color="red" />
+                      </TouchableOpacity>
+                    </View>
                     <View style={styles.row}>
                       <TouchableOpacity onPress={() => onPlayPause(audio.path)}>
                         <Ionicons
@@ -273,13 +330,13 @@ export default function VoiceToTextScreen() {
                     </View>
 
                     <View style={styles.timeRow}>
-                      <Text style={{color:'#525252'}}>
+                      <Text style={{ color: '#525252' }}>
                         {playingPath === audio.path
                           ? formatTime(position)
                           : '00:00'}
                       </Text>
 
-                      <Text style={{color:'#525252'}}>
+                      <Text style={{ color: '#525252' }}>
                         {audio.duration
                           ? formatTime(audio.duration * 1000)
                           : '--:--'}
@@ -306,7 +363,7 @@ const styles = StyleSheet.create({
   },
   controls: {
     position: 'absolute',
-    top: 20,
+    top:Platform.OS === 'ios' ? 60: 20,
     right: 20,
     alignItems: 'center',
     gap: 12,
@@ -327,7 +384,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   list: {
-    marginTop: width > 700 ? 0 : 100,
+    marginTop: width > 700 ? 0 : 140,
     padding: 40,
     gap: 20,
     width: width > 700 ? '35%' : '100%',

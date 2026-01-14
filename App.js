@@ -1,19 +1,30 @@
+import React, { useEffect, useState } from 'react';
+import { PermissionsAndroid, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-
+import TrackPlayer from 'react-native-track-player';
 import VoiceToTextScreen from './src/screens/VoiceToTextScreen';
 import VoiceToClickScreen from './src/screens/VoiceToClickScreen';
-import { useEffect, useState } from 'react';
-import { PermissionsAndroid, Platform } from 'react-native';
-import TrackPlayer from 'react-native-track-player';
-import BiometcricGate from './src/utils/BiometricGate';
+import BiometricGate from './src/utils/BiometricGate';
+
 const Tab = createBottomTabNavigator();
 
 export default function App() {
   useEffect(() => {
-    (async () => {
+    const setupPlayer = async () => {
       await TrackPlayer.setupPlayer();
-    })();
+
+      if (Platform.OS === 'ios') {
+        await TrackPlayer.setAudioMode({
+          playsInBackground: true,
+          staysActiveInBackground: true,
+          interruptionModeIOS: TrackPlayer.AudioInterruptionMode.DoNothing,
+          playThroughEarpieceAndroid: false,
+        });
+      }
+    };
+
+    setupPlayer();
   }, []);
 
   useEffect(() => {
@@ -47,11 +58,13 @@ export default function App() {
 
     androidRequestPermission();
   }, []);
+
   const [unlocked, setUnlocked] = useState(false);
 
   if (!unlocked) {
-    return <BiometcricGate onUnlocked={() => setUnlocked(true)} />;
+    return <BiometricGate onUnlocked={() => setUnlocked(true)} />;
   }
+
   return (
     <NavigationContainer>
       <Tab.Navigator
