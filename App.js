@@ -11,14 +11,10 @@ const Tab = createBottomTabNavigator();
 
 export default function App() {
   useEffect(() => {
-  (async () => {
-    await TrackPlayer.setupPlayer();
-  })();
-
-  return () => {
-    TrackPlayer.destroy();
-  };
-}, []);
+    (async () => {
+      await TrackPlayer.setupPlayer();
+    })();
+  }, []);
 
   useEffect(() => {
     async function androidRequestPermission() {
