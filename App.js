@@ -6,11 +6,13 @@ import TrackPlayer from 'react-native-track-player';
 import VoiceToTextScreen from './src/screens/VoiceToTextScreen';
 import VoiceToClickScreen from './src/screens/VoiceToClickScreen';
 import BiometricGate from './src/utils/BiometricGate';
-
+import { NativeModules } from 'react-native';
 const Tab = createBottomTabNavigator();
 
 export default function App() {
   useEffect(() => {
+    NativeModules.ImmersiveMode.enterImmersiveMode();
+
     const setupPlayer = async () => {
       await TrackPlayer.setupPlayer();
 
@@ -61,9 +63,9 @@ export default function App() {
 
   const [unlocked, setUnlocked] = useState(false);
 
-  if (!unlocked) {
-    return <BiometricGate onUnlocked={() => setUnlocked(true)} />;
-  }
+  // if (!unlocked) {
+  //   return <BiometricGate onUnlocked={() => setUnlocked(true)} />;
+  // }
 
   return (
     <NavigationContainer>
