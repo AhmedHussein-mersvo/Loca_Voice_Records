@@ -11,7 +11,7 @@ const Tab = createBottomTabNavigator();
 
 export default function App() {
   useEffect(() => {
-    NativeModules.ImmersiveMode.enterImmersiveMode();
+    if( Platform.Os === 'android') NativeModules.ImmersiveMode.enterImmersiveMode();
 
     const setupPlayer = async () => {
       await TrackPlayer.setupPlayer();
@@ -63,9 +63,9 @@ export default function App() {
 
   const [unlocked, setUnlocked] = useState(false);
 
-  // if (!unlocked) {
-  //   return <BiometricGate onUnlocked={() => setUnlocked(true)} />;
-  // }
+  if (!unlocked) {
+    return <BiometricGate onUnlocked={() => setUnlocked(true)} />;
+  }
 
   return (
     <NavigationContainer>

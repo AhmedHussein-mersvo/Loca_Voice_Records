@@ -36,6 +36,7 @@ export default function VoiceToTextScreen() {
   const [position, setPosition] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [recording, setRecording] = useState(false);
+  const [transcript, setTranscript] = useState({});
 
   useEffect(() => {
     getAudios(folder, setAudioPlayers, AUDIO_EXTENSIONS, getAudioDuration);
@@ -84,6 +85,8 @@ export default function VoiceToTextScreen() {
         position={position}
         playbackSpeed={playbackSpeed}
         isPaused={isPaused}
+        transcript={transcript}
+        setTranscript={setTranscript}
       />
     </View>
   );
