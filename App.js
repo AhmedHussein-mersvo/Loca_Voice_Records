@@ -7,6 +7,7 @@ import VoiceToTextScreen from './src/screens/VoiceToTextScreen';
 import VoiceToClickScreen from './src/screens/VoiceToClickScreen';
 import BiometricGate from './src/utils/BiometricGate';
 import { NativeModules } from 'react-native';
+import SingleClickScreen from './src/screens/SingleClickScreen';
 const Tab = createBottomTabNavigator();
 
 export default function App() {
@@ -100,6 +101,20 @@ export default function App() {
           }}
           name="VoiceToClickScreen"
           component={VoiceToClickScreen}
+        />
+        <Tab.Screen
+          options={{
+            tabBarLabel: 'SingleClickScreen',
+            tabBarIcon: () => null,
+            tabBarStyle: {
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+            },
+          }}
+          name="SingleClickScreen"
+          component={SingleClickScreen}
         />
       </Tab.Navigator>
     </NavigationContainer>

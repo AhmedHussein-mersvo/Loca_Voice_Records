@@ -11,8 +11,8 @@ import {
 import Slider from '@react-native-community/slider';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Sound from 'react-native-nitro-sound';
-import onStartRecord from '../services/RecordService/StartRecordingService';
-import onStopRecord from '../services/RecordService/StopRecordingSerivce';
+import onStartRecord from '../services/RecordService/VoiceToText/StartRecordingService';
+import onStopRecord from '../services/RecordService/VoiceToText/StopRecordingSerivce';
 import { folder } from '../utils/RecordingDirectory';
 import { AUDIO_EXTENSIONS } from '../utils/RecordingDirectory';
 import getAudios from '../services/AudioService/GetAudiosService';

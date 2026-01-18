@@ -139,7 +139,7 @@ export default function ListAudios({
                   <Text style={styles.transcript}>
                     {transcript[audio.path]}
                   </Text>
-                ):isPlaying && <Text style={styles.transcript}>Transcripting...</Text>}
+                ): <Text style={styles.transcript}>No Transcript</Text>}
               </View>
             );
           })
